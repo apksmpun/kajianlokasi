@@ -178,7 +178,7 @@
                     userLng = position.coords.longitude;
                     document.getElementById("status").innerText = "Lokasi berhasil didapatkan.";
                 }, () => {
-                    document.getElementById("status").innerText = "Gagal mendapatkan lokasi.";
+                    document.getElementById("status").innerText = "Gagal mendapatkan lokasi, aktifkan lokasi di browser dan HP.";
                 });
             } else {
                 document.getElementById("status").innerText = "Geolocation tidak didukung.";
