@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Absensi Kajian</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            text-align: center;
+            background: #f4f4f4;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 400px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin: auto;
+        }
+
+        h2 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        #loadingNama {
+            color: blue;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .autocomplete-container {
+            position: relative;
+            width: 100%;
+        }
+
+        #namaUser {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background: #fff;
+        }
+
+        .autocomplete-list {
+            position: absolute;
+            width: 100%;
+            background: white;
+            border: 1px solid #ccc;
+            border-top: none;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        .autocomplete-list div {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .autocomplete-list div:hover {
+            background: #f1f1f1;
+        }
+
+        #status {
+            margin-top: 10px;
+            color: red;
+            font-weight: bold;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            background: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        #hasilAbsen {
+            margin-top: 20px;
+            font-weight: bold;
+            color: green;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Absensi Hadir Kajian</h2>
+
+        <p id="loadingNama">Memuat daftar nama...</p> <!-- Indikator Loading -->
+        
+        <div class="autocomplete-container">
+            <input type="text" id="namaUser" placeholder="Cari nama..." autocomplete="off" disabled>
+            <div id="autocomplete-list" class="autocomplete-list"></div>
+        </div>
+
+        <p id="status">Menunggu lokasi...</p>
+        <button id="absenBtn" disabled>Absen Sekarang</button>
+        <p id="hasilAbsen"></p>
+    </div>
+
+    <script>
+        let userLat, userLng;
+        let namaList = [];
+
+        function getNamaDariServer() {
+            fetch("https://script.google.com/macros/s/AKfycbySsgyPpk2kfol3gWArn5nz0zCn6DnY_xeYqCxvDvwodNTO6xVR2cZ-jAGn0SQk5YFDxA/exec?type=getNama")
+                .then(response => response.json())
+                .then(data => {
+                    namaList = data;
+                    document.getElementById("loadingNama").style.display = "none"; // Sembunyikan loading
+                    document.getElementById("namaUser").disabled = false; // Aktifkan input
+                })
+                .catch(error => {
+                    console.error("Gagal mengambil data nama:", error);
+                    document.getElementById("loadingNama").innerText = "❌ Gagal memuat daftar nama!";
+                    document.getElementById("loadingNama").style.color = "red";
+                });
+        }
+
+        function filterNama(input) {
+            let listContainer = document.getElementById("autocomplete-list");
+            listContainer.innerHTML = "";
+
+            if (!input) {
+                return;
+            }
+
+            let filteredNama = namaList.filter(nama => nama.toLowerCase().includes(input.toLowerCase()));
+            
+            filteredNama.forEach(nama => {
+                let div = document.createElement("div");
+                div.innerText = nama;
+                div.addEventListener("click", function() {
+                    document.getElementById("namaUser").value = nama;
+                    listContainer.innerHTML = "";
+                    document.getElementById("absenBtn").disabled = false;
+                });
+                listContainer.appendChild(div);
+            });
+        }
+
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    userLat = position.coords.latitude;
+                    userLng = position.coords.longitude;
+                    document.getElementById("status").innerText = "Lokasi berhasil didapatkan.";
+                }, () => {
+                    document.getElementById("status").innerText = "Gagal mendapatkan lokasi.";
+                });
+            } else {
+                document.getElementById("status").innerText = "Geolocation tidak didukung.";
+            }
+        }
+
+        document.getElementById("namaUser").addEventListener("input", function() {
+            filterNama(this.value);
+        });
+
+        document.getElementById("absenBtn").addEventListener("click", () => {
+            const nama = document.getElementById("namaUser").value;
+            if (!nama) {
+                Swal.fire("Peringatan!", "Silakan pilih nama terlebih dahulu.", "warning");
+                return;
+            }
+
+            const btn = document.getElementById("absenBtn");
+            btn.classList.add("loading");
+            btn.innerText = "Memproses...";
+
+            fetch(`https://script.google.com/macros/s/AKfycbySsgyPpk2kfol3gWArn5nz0zCn6DnY_xeYqCxvDvwodNTO6xVR2cZ-jAGn0SQk5YFDxA/exec?type=absen&nama=${encodeURIComponent(nama)}&lat=${userLat}&lng=${userLng}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            title: "Absen Berhasil!",
+                            text: `✅ Alhamdulillah ${nama} berhasil absen.`,
+                            icon: "success",
+                        });
+                        document.getElementById("hasilAbsen").innerText = `✅ ${nama} sudah datang kajian!`;
+                    } else {
+                        Swal.fire({
+                            title: "Gagal Absen!",
+                            text: `❌ ${data.message}`,
+                            icon: "error",
+                        });
+                    }
+                })
+                .catch(error => {
+                    Swal.fire("Error!", "Gagal mengirim data ke server.", "error");
+                    console.error("Gagal mengirim data:", error);
+                })
+                .finally(() => {
+                    btn.classList.remove("loading");
+                    btn.innerText = "Absen Sekarang";
+                });
+        });
+
+        getNamaDariServer();
+        getLocation();
+    </script>
+
+</body>
+</html>
