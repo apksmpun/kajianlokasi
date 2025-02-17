@@ -83,7 +83,6 @@
             width: 100%;
             padding: 12px;
             font-size: 16px;
-            background: #007BFF;
             color: white;
             border: none;
             border-radius: 5px;
@@ -92,8 +91,20 @@
             transition: background 0.3s;
         }
 
-        button:hover {
+        #absenBtn {
+            background: #007BFF;
+        }
+
+        #absenBtn:hover {
             background: #0056b3;
+        }
+
+        #tidakHadirBtn {
+            background: #DC3545;
+        }
+
+        #tidakHadirBtn:hover {
+            background: #a71d2a;
         }
 
         button:disabled {
@@ -126,110 +137,187 @@
         </div>
 
         <p id="status">Menunggu lokasi...</p>
+
         <button id="absenBtn" disabled>Absen Sekarang</button>
+        <button id="tidakHadirBtn" disabled>Laporkan Ketidakhadiran</button>
+
         <p id="hasilAbsen"></p>
     </div>
 
     <script>
         let userLat, userLng;
-        let namaList = [];
+let namaList = [];
 
-        function getNamaDariServer() {
-            fetch("https://script.google.com/macros/s/AKfycbySsgyPpk2kfol3gWArn5nz0zCn6DnY_xeYqCxvDvwodNTO6xVR2cZ-jAGn0SQk5YFDxA/exec?type=getNama")
-                .then(response => response.json())
-                .then(data => {
-                    namaList = data;
-                    document.getElementById("loadingNama").style.display = "none"; // Sembunyikan loading
-                    document.getElementById("namaUser").disabled = false; // Aktifkan input
-                })
-                .catch(error => {
-                    console.error("Gagal mengambil data nama:", error);
-                    document.getElementById("loadingNama").innerText = "❌ Gagal memuat daftar nama!";
-                    document.getElementById("loadingNama").style.color = "red";
-                });
-        }
+function getNamaDariServer() {
+    fetch("https://script.google.com/macros/s/AKfycbySsgyPpk2kfol3gWArn5nz0zCn6DnY_xeYqCxvDvwodNTO6xVR2cZ-jAGn0SQk5YFDxA/exec?type=getNama")
+        .then(response => response.json())
+        .then(data => {
+            namaList = data;
+            document.getElementById("loadingNama").style.display = "none";
+            document.getElementById("namaUser").disabled = false;
+        })
+        .catch(error => {
+            console.error("Gagal mengambil data nama:", error);
+            document.getElementById("loadingNama").innerText = "❌ Gagal memuat daftar nama!";
+            document.getElementById("loadingNama").style.color = "red";
+        });
+}
 
-        function filterNama(input) {
-            let listContainer = document.getElementById("autocomplete-list");
+function filterNama(input) {
+    let listContainer = document.getElementById("autocomplete-list");
+    listContainer.innerHTML = "";
+
+    if (!input) return;
+
+    let filteredNama = namaList.filter(nama => nama.toLowerCase().includes(input.toLowerCase()));
+
+    filteredNama.forEach(nama => {
+        let div = document.createElement("div");
+        div.innerText = nama;
+        div.addEventListener("click", function () {
+            document.getElementById("namaUser").value = nama;
             listContainer.innerHTML = "";
+            document.getElementById("absenBtn").disabled = false;
+            document.getElementById("tidakHadirBtn").disabled = false;
+        });
+        listContainer.appendChild(div);
+    });
+}
 
-            if (!input) {
-                return;
-            }
+function getLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(position => {
+            userLat = position.coords.latitude;
+            userLng = position.coords.longitude;
+            document.getElementById("status").innerText = "Lokasi berhasil didapatkan.";
+        }, () => {
+            document.getElementById("status").innerText = "Gagal mendapatkan lokasi.";
+        });
+    } else {
+        document.getElementById("status").innerText = "Geolocation tidak didukung.";
+    }
+}
 
-            let filteredNama = namaList.filter(nama => nama.toLowerCase().includes(input.toLowerCase()));
-            
-            filteredNama.forEach(nama => {
-                let div = document.createElement("div");
-                div.innerText = nama;
-                div.addEventListener("click", function() {
-                    document.getElementById("namaUser").value = nama;
-                    listContainer.innerHTML = "";
-                    document.getElementById("absenBtn").disabled = false;
+// Fungsi untuk menampilkan loading di tombol
+function loadingState(isLoading, btn, defaultText = "Absen Sekarang") {
+    if (isLoading) {
+        btn.innerText = "Mengirim...";
+        btn.disabled = true;
+    } else {
+        btn.innerText = defaultText;
+        btn.disabled = false;
+    }
+}
+
+// Event listener untuk input nama
+document.getElementById("namaUser").addEventListener("input", function () {
+    filterNama(this.value);
+});
+
+// Tombol Absen (Hadir)
+document.getElementById("absenBtn").addEventListener("click", function () {
+    const btn = this;
+    const nama = document.getElementById("namaUser").value;
+    if (!nama) {
+        Swal.fire("Peringatan!", "Silakan pilih nama terlebih dahulu.", "warning");
+        return;
+    }
+    if (!userLat || !userLng) {
+    Swal.fire("Peringatan!", "Lokasi tidak tersedia. Silakan aktifkan lokasi di browser dan HP.", "warning").then(() => {
+        window.location.reload();  // Reload halaman setelah notifikasi
+    });
+    return;
+    }
+
+    loadingState(true, btn);
+
+    fetch(`https://script.google.com/macros/s/AKfycbySsgyPpk2kfol3gWArn5nz0zCn6DnY_xeYqCxvDvwodNTO6xVR2cZ-jAGn0SQk5YFDxA/exec?type=absen&nama=${encodeURIComponent(nama)}&lat=${userLat}&lng=${userLng}`)
+        .then(response => response.json())
+        .then(data => {
+            loadingState(false, btn);
+            if (data.success) {
+                Swal.fire("Alhamdulillah!", `${nama} berhasil absen!`, "success");
+            }else {
+                Swal.fire("Gagal!", data.message, "error").then(() => {
+                    window.location.reload();  // Reload halaman setelah notifikasi gagal
                 });
-                listContainer.appendChild(div);
-            });
-        }
+            }
+            
+        })
+        .catch(() => {
+            loadingState(false, btn);
+            Swal.fire("Error!", "Terjadi kesalahan saat mengirim data!", "error");
+        });
+});
 
-        function getLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(position => {
-                    userLat = position.coords.latitude;
-                    userLng = position.coords.longitude;
-                    document.getElementById("status").innerText = "Lokasi berhasil didapatkan.";
-                }, () => {
-                    document.getElementById("status").innerText = "Gagal mendapatkan lokasi, aktifkan lokasi di browser dan HP.";
+// Tombol Tidak Hadir
+document.getElementById("tidakHadirBtn").addEventListener("click", () => {
+    const nama = document.getElementById("namaUser").value;
+    if (!nama) {
+        Swal.fire("Peringatan!", "Silakan pilih nama terlebih dahulu.", "warning");
+        return;
+    }
+
+    Swal.fire({
+        title: "Pilih Alasan Ketidakhadiran",
+        input: "select",
+        inputOptions: {
+            izin: "Izin",
+            sakit: "Sakit"
+        },
+        inputPlaceholder: "Pilih alasan",
+        showCancelButton: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            let alasan = result.value;
+            if (alasan === "izin") {
+                Swal.fire({
+                    title: "Pilih Jenis Izin",
+                    input: "select",
+                    inputOptions: {
+                        "Mengisi kajian" : "Mengisi Kajian",
+                        umroh : "Umroh",
+                        "Keperluan Keluarga" : "Keperluan Keluarga"
+                    },
+                    inputPlaceholder: "Pilih jenis izin",
+                    showCancelButton: true
+                }).then((resultJenisIzin) => {
+                    if (resultJenisIzin.isConfirmed) {
+                        kirimDataTidakHadir(nama, alasan, resultJenisIzin.value);
+                    }
                 });
             } else {
-                document.getElementById("status").innerText = "Geolocation tidak didukung.";
+                kirimDataTidakHadir(nama, alasan, ""); // Tidak ada jenis izin
             }
         }
+    });
+});
 
-        document.getElementById("namaUser").addEventListener("input", function() {
-            filterNama(this.value);
-        });
+// Fungsi untuk mengirim data tidak hadir
+function kirimDataTidakHadir(nama, alasan, jenisIzin) {
+    const btn = document.getElementById("tidakHadirBtn");
+    loadingState(true, btn);
 
-        document.getElementById("absenBtn").addEventListener("click", () => {
-            const nama = document.getElementById("namaUser").value;
-            if (!nama) {
-                Swal.fire("Peringatan!", "Silakan pilih nama terlebih dahulu.", "warning");
-                return;
+    fetch(`https://script.google.com/macros/s/AKfycbySsgyPpk2kfol3gWArn5nz0zCn6DnY_xeYqCxvDvwodNTO6xVR2cZ-jAGn0SQk5YFDxA/exec?type=tidakHadir&nama=${encodeURIComponent(nama)}&alasan=${encodeURIComponent(alasan)}&jenisIzin=${encodeURIComponent(jenisIzin)}`)
+        .then(response => response.json())
+        .then(data => {
+            loadingState(false, btn);
+            if (data.success) {
+                Swal.fire("Berhasil!", `${nama} tercatat sebagai tidak hadir (${alasan}${jenisIzin ? " - " + jenisIzin : ""}).`, "success");
+            } else {
+                Swal.fire("Gagal!", data.message, "error");
             }
-
-            const btn = document.getElementById("absenBtn");
-            btn.classList.add("loading");
-            btn.innerText = "Memproses...";
-
-            fetch(`https://script.google.com/macros/s/AKfycbySsgyPpk2kfol3gWArn5nz0zCn6DnY_xeYqCxvDvwodNTO6xVR2cZ-jAGn0SQk5YFDxA/exec?type=absen&nama=${encodeURIComponent(nama)}&lat=${userLat}&lng=${userLng}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        Swal.fire({
-                            title: "Absen Berhasil!",
-                            text: `✅ Alhamdulillah ${nama} berhasil absen.`,
-                            icon: "success",
-                        });
-                        document.getElementById("hasilAbsen").innerText = `✅ ${nama} sudah datang kajian!`;
-                    } else {
-                        Swal.fire({
-                            title: "Gagal Absen!",
-                            text: `❌ ${data.message}`,
-                            icon: "error",
-                        });
-                    }
-                })
-                .catch(error => {
-                    Swal.fire("Error!", "Gagal mengirim data ke server.", "error");
-                    console.error("Gagal mengirim data:", error);
-                })
-                .finally(() => {
-                    btn.classList.remove("loading");
-                    btn.innerText = "Absen Sekarang";
-                });
+        })
+        .catch(() => {
+            loadingState(false, btn);
+            Swal.fire("Error!", "Terjadi kesalahan saat mengirim data!", "error");
         });
+}
 
-        getNamaDariServer();
-        getLocation();
+getNamaDariServer();
+getLocation();
+
+
     </script>
 
 </body>
