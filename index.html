@@ -1,202 +1,331 @@
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Absensi Kajian</title>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Absensi Kajian</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            text-align: center;
+            background: #f4f4f4;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 400px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin: auto;
+        }
+
+        h2 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        #loadingNama {
+            color: blue;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .autocomplete-container {
+            position: relative;
+            width: 100%;
+        }
+
+        #namaUser {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background: #fff;
+        }
+
+        .autocomplete-list {
+            position: absolute;
+            width: 100%;
+            background: white;
+            border: 1px solid #ccc;
+            border-top: none;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        .autocomplete-list div {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .autocomplete-list div:hover {
+            background: #f1f1f1;
+        }
+
+        #status {
+            margin-top: 10px;
+            color: red;
+            font-weight: bold;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+
+        #absenBtn {
+            background: #007BFF;
+        }
+
+        #absenBtn:hover {
+            background: #0056b3;
+        }
+
+        #tidakHadirBtn {
+            background: #DC3545;
+        }
+
+        #tidakHadirBtn:hover {
+            background: #a71d2a;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        #hasilAbsen {
+            margin-top: 20px;
+            font-weight: bold;
+            color: green;
+        }
+ #caraPenggunaanBtn {
+    background: none;
+    border: none;
+    font-size: 15x;
+    cursor: pointer;
+    margin-top: 10px;
+    position: relative;
+    color: #007BFF ;
+    
+}
+
+    </style>
 </head>
+<body>
 
-<body class="bg-gray-100 text-center p-4 font-sans">
-  <div class="max-w-md bg-white p-6 rounded-xl shadow-md mx-auto">
-    <h2 class="text-2xl font-semibold text-gray-800 mb-2">Absensi Hadir Kajian</h2>
+    <div class="container">
+        <h2>Absensi Hadir Kajian</h2>
+       
 
-    <p id="loadingNama" class="text-blue-600 font-bold mb-3">Memuat daftar nama...</p>
+        <p id="loadingNama">Memuat daftar nama...</p> <!-- Indikator Loading -->
+        
+        <div class="autocomplete-container">
+            <input type="text" id="namaUser" placeholder="Ketik & pilih nama dari daftar..." autocomplete="off" disabled>
+            <div id="autocomplete-list" class="autocomplete-list"></div>
+        </div>
 
-    <div class="relative w-full mb-3">
-      <input type="text" id="namaUser" placeholder="Ketik & pilih nama dari daftar..." autocomplete="off"
-        disabled
-        class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring focus:ring-blue-200 bg-white">
-      <div id="autocomplete-list" class="absolute w-full bg-white border border-t-0 max-h-40 overflow-y-auto z-50 rounded-b-md"></div>
+        <p id="status">Menunggu lokasi...</p>
+
+        <button id="absenBtn" disabled>Absen Sekarang</button>
+        <button id="tidakHadirBtn" disabled>Laporkan Ketidakhadiran</button>
+        <button id="caraPenggunaanBtn" onclick="tampilkanAturan()">ℹ️ Cara Penggunaan</button>
+        
+
+
+
+        <p id="hasilAbsen"></p>
     </div>
 
-    <p id="status" class="text-red-600 font-semibold mb-4">Menunggu lokasi...</p>
+    <script>
+        function tampilkanAturan() {
+  Swal.fire({
+    icon: 'info',
+    title: 'Cara Penggunaan',
+    html: 
+      <ul style="text-align: left;">
+        <li>📍 <strong>Aktifkan GPS</strong> di perangkat Anda sebelum mulai menggunakan aplikasi.</li>
+        <li>✅ Pilih nama Anda dari daftar yang tersedia.</li>
+        <li>❌ Jika tidak memilih nama, tombol tidak bisa ditekan.</li>
+        <li>📌 Pastikan nama yang diketik benar-benar sesuai dengan yang ada di sistem.</li>
+        
+      </ul>
+    
+  });
+}
 
-    <button id="absenBtn" disabled
-      class="w-full p-3 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400">Absen
-      Sekarang</button>
+        let userLat, userLng;
+let namaList = [];
 
-    <button id="tidakHadirBtn" disabled
-      class="w-full p-3 text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors mt-2 disabled:bg-gray-400">Laporkan
-      Ketidakhadiran</button>
-
-    <button id="caraPenggunaanBtn" onclick="tampilkanAturan()"
-      class="mt-4 text-blue-600 hover:underline text-sm">ℹ️ Cara Penggunaan</button>
-
-    <p id="hasilAbsen" class="mt-4 font-bold text-green-600"></p>
-  </div>
-
-  <script>
-    function tampilkanAturan() {
-      Swal.fire({
-        icon: 'info',
-        title: 'Cara Penggunaan',
-        html: `
-          <ul style="text-align: left;">
-            <li>📍 <strong>Aktifkan GPS</strong> di perangkat Anda sebelum mulai menggunakan aplikasi.</li>
-            <li>✅ Pilih nama Anda dari daftar yang tersedia.</li>
-            <li>❌ Jika tidak memilih nama, tombol tidak bisa ditekan.</li>
-            <li>📌 Pastikan nama yang diketik benar-benar sesuai dengan yang ada di sistem.</li>
-          </ul>`
-      });
-    }
-
-    let userLat, userLng;
-    let namaList = [];
-
-    function getNamaDariServer() {
-      fetch("https://script.google.com/macros/s/AKfycbySsgyPpk2kfol3gWArn5nz0zCn6DnY_xeYqCxvDvwodNTO6xVR2cZ-jAGn0SQk5YFDxA/exec?type=getNama")
+function getNamaDariServer() {
+    fetch("https://script.google.com/macros/s/AKfycbySsgyPpk2kfol3gWArn5nz0zCn6DnY_xeYqCxvDvwodNTO6xVR2cZ-jAGn0SQk5YFDxA/exec?type=getNama")
         .then(response => response.json())
         .then(data => {
-          namaList = data;
-          document.getElementById("loadingNama").style.display = "none";
-          document.getElementById("namaUser").disabled = false;
+            namaList = data;
+            document.getElementById("loadingNama").style.display = "none";
+            document.getElementById("namaUser").disabled = false;
         })
-        .catch(() => {
-          document.getElementById("loadingNama").innerText = "❌ Gagal memuat daftar nama!";
-          document.getElementById("loadingNama").classList.replace("text-blue-600", "text-red-600");
+        .catch(error => {
+            console.error("Gagal mengambil data nama:", error);
+            document.getElementById("loadingNama").innerText = "❌ Gagal memuat daftar nama!";
+            document.getElementById("loadingNama").style.color = "red";
         });
-    }
+}
 
-    function filterNama(input) {
-      let listContainer = document.getElementById("autocomplete-list");
-      listContainer.innerHTML = "";
+function filterNama(input) {
+    let listContainer = document.getElementById("autocomplete-list");
+    listContainer.innerHTML = "";
 
-      if (!input) return;
+    if (!input) return;
 
-      let filteredNama = namaList.filter(nama => nama.toLowerCase().includes(input.toLowerCase()));
+    let filteredNama = namaList.filter(nama => nama.toLowerCase().includes(input.toLowerCase()));
 
-      filteredNama.forEach(nama => {
+    filteredNama.forEach(nama => {
         let div = document.createElement("div");
         div.innerText = nama;
-        div.classList.add("px-4", "py-2", "hover:bg-gray-100", "cursor-pointer", "border-b");
-        div.addEventListener("click", () => {
-          document.getElementById("namaUser").value = nama;
-          listContainer.innerHTML = "";
-          document.getElementById("absenBtn").disabled = false;
-          document.getElementById("tidakHadirBtn").disabled = false;
+        div.addEventListener("click", function () {
+            document.getElementById("namaUser").value = nama;
+            listContainer.innerHTML = "";
+            document.getElementById("absenBtn").disabled = false;
+            document.getElementById("tidakHadirBtn").disabled = false;
         });
         listContainer.appendChild(div);
-      });
-    }
+    });
+}
 
-    function getLocation() {
-      if (navigator.geolocation) {
+function getLocation() {
+    if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(position => {
-          userLat = position.coords.latitude;
-          userLng = position.coords.longitude;
-          document.getElementById("status").innerText = "Lokasi berhasil didapatkan.";
+            userLat = position.coords.latitude;
+            userLng = position.coords.longitude;
+            document.getElementById("status").innerText = "Lokasi berhasil didapatkan.";
         }, () => {
-          document.getElementById("status").innerText = "Gagal mendapatkan lokasi, aktifkan GPS dan refresh halaman ini.";
+            document.getElementById("status").innerText = "Gagal mendapatkan lokasi, aktifkan GPS dan refresh halaman ini.";
         });
-      } else {
+    } else {
         document.getElementById("status").innerText = "Geolocation tidak didukung.";
-      }
     }
+}
 
-    function loadingState(isLoading, btn, defaultText = "Absen Sekarang") {
-      if (isLoading) {
+// Fungsi untuk menampilkan loading di tombol
+function loadingState(isLoading, btn, defaultText = "Absen Sekarang") {
+    if (isLoading) {
         btn.innerText = "Mengirim...";
         btn.disabled = true;
-      } else {
+    } else {
         btn.innerText = defaultText;
         btn.disabled = false;
-      }
+    }
+}
+
+// Event listener untuk input nama
+document.getElementById("namaUser").addEventListener("input", function () {
+    filterNama(this.value);
+});
+
+// Tombol Absen (Hadir)
+document.getElementById("absenBtn").addEventListener("click", function () {
+    const btn = this;
+    const nama = document.getElementById("namaUser").value;
+    if (!nama) {
+        Swal.fire("Peringatan!", "Silakan pilih nama terlebih dahulu.", "warning");
+        return;
+    }
+    if (!userLat || !userLng) {
+    Swal.fire("Peringatan!", "Lokasi tidak tersedia. Silakan aktifkan lokasi di browser dan HP.", "warning").then(() => {
+        window.location.reload();  // Reload halaman setelah notifikasi
+    });
+    return;
     }
 
-    document.getElementById("namaUser").addEventListener("input", function () {
-      filterNama(this.value);
-    });
+    loadingState(true, btn);
 
-    document.getElementById("absenBtn").addEventListener("click", function () {
-      const btn = this;
-      const nama = document.getElementById("namaUser").value;
-      if (!nama) {
-        Swal.fire("Peringatan!", "Silakan pilih nama terlebih dahulu.", "warning");
-        return;
-      }
-      if (!userLat || !userLng) {
-        Swal.fire("Peringatan!", "Lokasi tidak tersedia. Silakan aktifkan lokasi di browser dan HP.", "warning").then(() => {
-          window.location.reload();
-        });
-        return;
-      }
-
-      loadingState(true, btn);
-
-      fetch(`https://script.google.com/macros/s/AKfycbySsgyPpk2kfol3gWArn5nz0zCn6DnY_xeYqCxvDvwodNTO6xVR2cZ-jAGn0SQk5YFDxA/exec?type=absen&nama=${encodeURIComponent(nama)}&lat=${userLat}&lng=${userLng}`)
+    fetch(https://script.google.com/macros/s/AKfycbySsgyPpk2kfol3gWArn5nz0zCn6DnY_xeYqCxvDvwodNTO6xVR2cZ-jAGn0SQk5YFDxA/exec?type=absen&nama=${encodeURIComponent(nama)}&lat=${userLat}&lng=${userLng})
         .then(response => response.json())
         .then(data => {
-          loadingState(false, btn);
-          if (data.success) {
-            Swal.fire("Alhamdulillah!", `${nama} berhasil absen!`, "success");
-          } else {
-            Swal.fire("Gagal!", data.message, "error").then(() => {
-              window.location.reload();
-            });
-          }
+            loadingState(false, btn);
+            if (data.success) {
+                Swal.fire("Alhamdulillah!", ${nama} berhasil absen!, "success");
+            }else {
+                Swal.fire("Gagal!", data.message, "error").then(() => {
+                    window.location.reload();  // Reload halaman setelah notifikasi gagal
+                });
+            }
+            
         })
         .catch(() => {
-          loadingState(false, btn);
-          Swal.fire("Error!", "Terjadi kesalahan saat mengirim data!", "error");
+            loadingState(false, btn);
+            Swal.fire("Error!", "Terjadi kesalahan saat mengirim data!", "error");
         });
-    });
+});
 
-    document.getElementById("tidakHadirBtn").addEventListener("click", () => {
-      const nama = document.getElementById("namaUser").value;
-      if (!nama) {
+// Tombol Tidak Hadir
+document.getElementById("tidakHadirBtn").addEventListener("click", () => {
+    const nama = document.getElementById("namaUser").value;
+    if (!nama) {
         Swal.fire("Peringatan!", "Silakan pilih nama terlebih dahulu.", "warning");
         return;
-      }
+    }
 
-      Swal.fire({
+    Swal.fire({
         title: "Pilih Alasan Ketidakhadiran",
         input: "select",
         inputOptions: {
-          izin: "Izin",
-          sakit: "Sakit"
+            izin: "Izin",
+            sakit: "Sakit"
         },
         inputPlaceholder: "Pilih alasan",
         showCancelButton: true
-      }).then((result) => {
+    }).then((result) => {
         if (result.isConfirmed) {
-          let alasan = result.value;
-          if (alasan === "izin") {
-            Swal.fire({
-              title: "Pilih Jenis Izin",
-              input: "select",
-              inputOptions: {
-                "Mengisi kajian": "Mengisi Kajian",
-                umroh: "Umroh",
-                "Keperluan Keluarga": "Keperluan Keluarga"
-              },
-              inputPlaceholder: "Pilih jenis izin",
-              showCancelButton: true
-            }).then((resultJenisIzin) => {
-              if (resultJenisIzin.isConfirmed) {
-                kirimDataTidakHadir(nama, alasan, resultJenisIzin.value);
-              }
-            });
-          } else {
-            kirimDataTidakHadir(nama, alasan, "");
-          }
+            let alasan = result.value;
+            if (alasan === "izin") {
+                Swal.fire({
+                    title: "Pilih Jenis Izin",
+                    input: "select",
+                    inputOptions: {
+                        "Mengisi kajian" : "Mengisi Kajian",
+                        umroh : "Umroh",
+                        "Keperluan Keluarga" : "Keperluan Keluarga"
+                    },
+                    inputPlaceholder: "Pilih jenis izin",
+                    showCancelButton: true
+                }).then((resultJenisIzin) => {
+                    if (resultJenisIzin.isConfirmed) {
+                        kirimDataTidakHadir(nama, alasan, resultJenisIzin.value);
+                    }
+                });
+            } else {
+                kirimDataTidakHadir(nama, alasan, ""); // Tidak ada jenis izin
+            }
         }
-      });
     });
+});
 
-    // Fungsi untuk mengirim data tidak hadir
+// Fungsi untuk mengirim data tidak hadir
 function kirimDataTidakHadir(nama, alasan, jenisIzin) {
     const btn = document.getElementById("tidakHadirBtn");
     loadingState(true, btn);
@@ -219,7 +348,9 @@ function kirimDataTidakHadir(nama, alasan, jenisIzin) {
 
 getNamaDariServer();
 getLocation();
-  </script>
-</body>
 
+
+    </script>
+
+</body>
 </html>
