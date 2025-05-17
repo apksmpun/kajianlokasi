@@ -196,23 +196,29 @@
       });
     });
 
-    function kirimDataTidakHadir(nama, alasan, jenis) {
-      fetch(`https://script.google.com/macros/s/AKfycbySsgyPpk2kfol3gWArn5nz0zCn6DnY_xeYqCxvDvwodNTO6xVR2cZ-jAGn0SQk5YFDxA/exec?type=tidakhadir&nama=${encodeURIComponent(nama)}&alasan=${encodeURIComponent(alasan)}&jenis=${encodeURIComponent(jenis)}`)
-        .then(res => res.json())
+    // Fungsi untuk mengirim data tidak hadir
+function kirimDataTidakHadir(nama, alasan, jenisIzin) {
+    const btn = document.getElementById("tidakHadirBtn");
+    loadingState(true, btn);
+
+    fetch(https://script.google.com/macros/s/AKfycbySsgyPpk2kfol3gWArn5nz0zCn6DnY_xeYqCxvDvwodNTO6xVR2cZ-jAGn0SQk5YFDxA/exec?type=tidakHadir&nama=${encodeURIComponent(nama)}&alasan=${encodeURIComponent(alasan)}&jenisIzin=${encodeURIComponent(jenisIzin)})
+        .then(response => response.json())
         .then(data => {
-          if (data.success) {
-            Swal.fire("Berhasil!", `${nama} berhasil melaporkan ketidakhadiran.`, "success");
-          } else {
-            Swal.fire("Gagal!", data.message, "error");
-          }
+            loadingState(false, btn);
+            if (data.success) {
+                Swal.fire("Berhasil!", ${nama} tercatat sebagai tidak hadir (${alasan}${jenisIzin ? " - " + jenisIzin : ""})., "success");
+            } else {
+                Swal.fire("Gagal!", data.message, "error");
+            }
         })
         .catch(() => {
-          Swal.fire("Error!", "Terjadi kesalahan saat mengirim data!", "error");
+            loadingState(false, btn);
+            Swal.fire("Error!", "Terjadi kesalahan saat mengirim data!", "error");
         });
-    }
+}
 
-    getNamaDariServer();
-    getLocation();
+getNamaDariServer();
+getLocation();
   </script>
 </body>
 
