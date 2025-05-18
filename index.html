@@ -122,6 +122,16 @@
             font-weight: bold;
             color: green;
         }
+
+        #caraPenggunaanBtn {
+    background: none;
+    border: none;
+    font-size: 15x;
+    cursor: pointer;
+    margin-top: 10px;
+    position: relative;
+    color: #007BFF ;
+        }
     </style>
 </head>
 <body>
@@ -140,11 +150,29 @@
 
         <button id="absenBtn" disabled>Absen Sekarang</button>
         <button id="tidakHadirBtn" disabled>Laporkan Ketidakhadiran</button>
+        <button id="caraPenggunaanBtn" onclick="tampilkanAturan()">ℹ️ Cara Penggunaan</button>
 
         <p id="hasilAbsen"></p>
     </div>
+    
 
     <script>
+        function tampilkanAturan() {
+  Swal.fire({
+    icon: 'info',
+    title: 'Cara Penggunaan',
+    html: `
+      <ul style="text-align: left;">
+        <li>📍 <strong>Aktifkan GPS</strong> di perangkat Anda sebelum mulai menggunakan aplikasi.</li>
+        <li>✅ Pilih nama Anda dari daftar yang tersedia.</li>
+        <li>❌ Jika tidak memilih nama, tombol tidak bisa ditekan.</li>
+        <li>📌 Pastikan nama yang diketik benar-benar sesuai dengan yang ada di sistem.</li>
+      </ul>
+    `
+  });
+}
+
+     
         let userLat, userLng;
 let namaList = [];
 
@@ -162,6 +190,8 @@ function getNamaDariServer() {
             document.getElementById("loadingNama").style.color = "red";
         });
 }
+
+
 
 function filterNama(input) {
     let listContainer = document.getElementById("autocomplete-list");
@@ -316,6 +346,8 @@ function kirimDataTidakHadir(nama, alasan, jenisIzin) {
 
 getNamaDariServer();
 getLocation();
+
+
 
 
     </script>
